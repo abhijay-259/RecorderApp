@@ -39,7 +39,7 @@ class AuthRepository(private val context: Context) {
     suspend fun createAccount(registrationData: UserRegistration): String? {
         return try {
             // 1. Send a standard HTTP POST request to the exact server path
-            val response: HttpResponse = client.post("http://192.168.88.5:8000/register") {
+            val response: HttpResponse = client.post("http://$ip:8000/register") {
                 // 2. Instruct Ktor to format the request body as a standard JSON string payload
                 contentType(ContentType.Application.Json)
                 // 3. Drop your clean Kotlin data class object into the body slot.
@@ -64,7 +64,7 @@ class AuthRepository(private val context: Context) {
             // Construct the type-safe model envelope
             val payload = OtpVerificationPayload(email = email, otp_code = otpCode)
 
-            val response = client.post("http://192.168.88.5:8000/verify-otp") {
+            val response = client.post("http://$ip:8000/verify-otp") {
                 contentType(ContentType.Application.Json)
                 setBody(payload)
             }
@@ -87,7 +87,7 @@ class AuthRepository(private val context: Context) {
     }
     suspend fun accountLogin(payload: LogInPayload): String? {
         return try {
-            val response = client.post("http://192.168.88.5:8000/login"){
+            val response = client.post("http://$ip:8000/login"){
                 contentType(ContentType.Application.Json)
                 setBody(payload)
             }
@@ -110,5 +110,8 @@ class AuthRepository(private val context: Context) {
     }
     fun clearSession() {
         currentUserSession = null
+    }
+    companion object {
+        const val ip: String = "192.168.88.10"
     }
 }

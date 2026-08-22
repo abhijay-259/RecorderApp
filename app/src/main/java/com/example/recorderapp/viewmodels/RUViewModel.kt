@@ -40,7 +40,6 @@ class RUViewModel(
             false
             )
     var uploadJob: Job? = null
-    var currentFileName: String? = null
     val currentUser = authRepository.currentUserSession
     private val _status = MutableStateFlow(UploadState.IDLE)
     val status = _status.asStateFlow()
@@ -57,9 +56,7 @@ class RUViewModel(
     fun startRecordingButton(hasMicPermission: Boolean) {
         if (status.value == UploadState.IDLE) {
             if (hasMicPermission) {
-                currentFileName = null
                 _status.value = UploadState.RECORDING
-                currentFileName = audioRepository.startRecording()
             }
         }
         else if (status.value == UploadState.RECORDING) {
@@ -75,11 +72,9 @@ class RUViewModel(
                 currentUser,
                 isConnected.value,
                 dao,
-                currentFileName!!
             )
             if (successStatus) {
                 _status.value = UploadState.COMPLETE
-                currentFileName = null
                 delay(3.seconds)
                 _status.value = UploadState.IDLE
             }

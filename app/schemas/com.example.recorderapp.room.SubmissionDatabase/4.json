@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "45453822b20c11c22aa9dd8dbad8695d",
+    "entities": [
+      {
+        "tableName": "Submission2",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`worker_name` TEXT NOT NULL, `task_id` INTEGER NOT NULL, `filePath` TEXT NOT NULL, `worker_id` INTEGER, `submission_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "worker_name",
+            "columnName": "worker_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "task_id",
+            "columnName": "task_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "worker_id",
+            "columnName": "worker_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submission_id",
+            "columnName": "submission_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "submission_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '45453822b20c11c22aa9dd8dbad8695d')"
+    ]
+  }
+}

@@ -19,6 +19,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.recorderapp.connectivity.AndroidConnectivityObserver
 import com.example.recorderapp.repositories.AudioRepository
 import com.example.recorderapp.repositories.AuthRepository
@@ -35,6 +41,7 @@ import com.example.recorderapp.viewmodels.LogInViewModel
 import com.example.recorderapp.viewmodels.PendingSubmissionsViewModel
 import com.example.recorderapp.viewmodels.RUViewModel
 import com.example.recorderapp.viewmodels.SignInViewModel
+import com.example.recorderapp.workers.AutoSubmissionsWorker
 import kotlinx.serialization.Serializable
 
 // KOTLIN TYPE SAFE ROUTES
@@ -46,6 +53,17 @@ import kotlinx.serialization.Serializable
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val workRequest = OneTimeWorkRequestBuilder<AutoSubmissionsWorker>()
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            "AUTOMATED_AUDIO_SYNC_TASK",
+            ExistingWorkPolicy.KEEP, // Keeps the existing worker active and prevents duplicate execution chains
+            workRequest
+        )
         enableEdgeToEdge()
         setContent {
             RecorderAppTheme {
@@ -54,7 +72,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController() //nav object
-                    val audioRepository = AudioRepository(applicationContext)
+                    val db = SubmissionDatabase.getDatabase(applicationContext)
+                    val audioRepository = AudioRepository(applicationContext, db.dao)
                     val authRepository = AuthRepository(applicationContext)
                     navController.addOnDestinationChangedListener { _, destination, _ ->
                         // 1. Check if the screen the user is currently looking at matches your authentication gates
@@ -65,13 +84,6 @@ class MainActivity : ComponentActivity() {
                             authRepository.clearSession()
                             android.util.Log.d("SESSION_LOG", "User exited the app workspace. Repository session cleared successfully!")
                         }
-                    }
-                    val db by lazy {
-                        Room.databaseBuilder(
-                            applicationContext,
-                            SubmissionDatabase::class.java,
-                            "submissions.db"
-                        ).build()
                     }
                     // The Navigation traffic router graph
                     NavHost(

@@ -9,10 +9,15 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SubmissionDao {
     @Upsert
-    suspend fun insertSubmission(submission: Submission)
+    suspend fun insertSubmission(submission: Submission2)
 
-    @Query("SELECT * FROM submission")
-    fun getSubmissions(): Flow<List<Submission>>
+    @Query("SELECT * FROM Submission2")
+    fun getSubmissions(): Flow<List<Submission2>>
 
+    @Query("SELECT * FROM Submission2")
+    suspend fun getSubmissionsList(): List<Submission2>
+
+    @Query("DELETE FROM Submission2 WHERE submission_id = :id")
+    suspend fun deleteSubmission(id: Int?)
 
 }

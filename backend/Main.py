@@ -246,7 +246,7 @@ def receive_worker_submission(payload: dict):
 #_______________________________________________________________________________________________________________________
 
 @app.post("/upload-audio")
-def receive_audio(worker_name: str = Form(), audio_file: UploadFile = File()):
+def receive_audio(worker_name: str = Form(),email: EmailStr = Form(),user_id: str = Form(), recorded_text: str = Form(), audio_file: UploadFile = File()):
     raw_bytes = audio_file.file.read()
     unique_filename = f"{worker_name}_voice.mp4"
 
@@ -260,7 +260,7 @@ def receive_audio(worker_name: str = Form(), audio_file: UploadFile = File()):
     INSERT INTO submissions (task_id, worker_name, recorded_text)
     VALUES (%s, %s, %s);
     """
-    cursor.execute(insert_query, (102, worker_name, f"Audio File Saved As: {unique_filename}"))
+    cursor.execute(insert_query, (102, worker_name, f"Audio File Saved As: {recorded_text}"))
 
     conn.commit()
     cursor.close()

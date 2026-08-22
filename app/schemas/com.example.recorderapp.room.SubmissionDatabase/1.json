@@ -1,0 +1,93 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "88ad049f1fb9288ce755f6db946173f0",
+    "entities": [
+      {
+        "tableName": "Submission",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`worker_name` TEXT NOT NULL, `task_id` INTEGER NOT NULL, `recorded_text` BLOB NOT NULL, `worker_id` INTEGER, `submission_id` INTEGER PRIMARY KEY AUTOINCREMENT)",
+        "fields": [
+          {
+            "fieldPath": "worker_name",
+            "columnName": "worker_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "task_id",
+            "columnName": "task_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recorded_text",
+            "columnName": "recorded_text",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "worker_id",
+            "columnName": "worker_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submission_id",
+            "columnName": "submission_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "submission_id"
+          ]
+        }
+      },
+      {
+        "tableName": "Submission2",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`worker_name` TEXT NOT NULL, `task_id` INTEGER NOT NULL, `filePath` TEXT NOT NULL, `worker_id` INTEGER, `submission_id` INTEGER PRIMARY KEY AUTOINCREMENT)",
+        "fields": [
+          {
+            "fieldPath": "worker_name",
+            "columnName": "worker_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "task_id",
+            "columnName": "task_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "worker_id",
+            "columnName": "worker_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submission_id",
+            "columnName": "submission_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "submission_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '88ad049f1fb9288ce755f6db946173f0')"
+    ]
+  }
+}
