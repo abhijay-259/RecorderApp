@@ -3,6 +3,7 @@ package com.example.recorderapp.viewmodels
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.recorderapp.models.LogInPayload
 import com.example.recorderapp.models.UserRegistration
 import com.example.recorderapp.repositories.AudioRepository
 import kotlinx.coroutines.Job
@@ -48,9 +49,11 @@ class SignInViewModel(
         if (isPasswordMatching(currentPassword, currentConfirmPassword)) {
 
             viewModelScope.launch {
+                val payload = LogInPayload(userData.email, userData.password)
                 val error = authRepository.createAccount(userData)
-                if (error == null) {
-                    _uiState.update { it.copy(signInError = false, isSuccess = true) }
+                val result = authRepository.accountLogin(payload)
+                if (error == null && result == null) {
+                    _uiState.update { it.copy(signInError = false, isSuccess = true, errorMessage = null) }
                 } else {
                     _uiState.update { it.copy(signInError = true, errorMessage = error) }
                 }

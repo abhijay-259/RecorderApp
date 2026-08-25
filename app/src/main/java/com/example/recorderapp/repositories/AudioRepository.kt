@@ -62,7 +62,7 @@ class AudioRepository(
 
     fun startRecording() {
         try {
-            currentFileName = "${System.currentTimeMillis()}_${UUID.randomUUID().toString()}.mp4"
+            currentFileName = "${System.currentTimeMillis()}_${UUID.randomUUID()}.mp4"
             val file = File(context.filesDir, currentFileName!!)
             /*
             Uses native built in library called android.os.Build
@@ -151,7 +151,7 @@ class AudioRepository(
                 println("reached try isConnected = $isConnected")
                 // 2. Stream the binary file to your laptop over Wi-Fi
                 val response: HttpResponse = client.submitFormWithBinaryData(
-                    url = "http://$ip:8000/upload-audio",
+                    url = "http://$IP:8000/upload-audio",
                     formData = formData {
                         append("worker_name", currentUser!!.name)
                         append("email",currentUser.email)
@@ -162,10 +162,8 @@ class AudioRepository(
                         })
                     }
                 )
-                println("Response code block worked")
                 if (response.status.value == 200) {
                     File(context.filesDir, currentFileName.toString()).delete()
-                    println("SUccessful response")
                     currentFileName = null
                 }
                 return response.status.value == 200
@@ -196,7 +194,7 @@ class AudioRepository(
     suspend fun uploadSubmission(name: String, email: String, id: Int, fileName: String, fileBytes: ByteArray): Boolean {
         return try {
             val response: HttpResponse = client.submitFormWithBinaryData(
-                url = "http://$ip:8000/upload-audio",
+                url = "http://$IP:8000/upload-audio",
                 formData = formData {
                     append("worker_name", name)
                     append("email", email)
@@ -221,7 +219,7 @@ class AudioRepository(
         }
     }
     suspend fun uploadPendingSubmissions(): Boolean {
-        Log.println(Log.ASSERT, "Entered", "uploadPendingSubmissions in audiorepo")
+        Log.println(Log.ASSERT, "Entered", "uploadPendingSubmissions in audioRepository")
         return try {
             Log.println(Log.ASSERT, "Entered", "try block in function")
             val submissions = dao.getSubmissionsList()
@@ -230,11 +228,7 @@ class AudioRepository(
                 Log.println(Log.ASSERT, "Entered", "for loop")
                 Log.println(Log.ASSERT,"entered","Filepath is ${submission.filePath}")
                 println(submission.filePath)
-                val file = if (submission.filePath.startsWith("/")) {
-                    File(submission.filePath)
-                } else {
-                    File(context.filesDir, submission.filePath)
-                }
+                val file = File(submission.filePath)
                 if (!file.exists()) {
                     dao.deleteSubmission(submission.submission_id)
                     continue
@@ -293,6 +287,6 @@ class AudioRepository(
         Log.println(Log.ASSERT, "WorkManager", "Unique sync task registered with OS.")
     }
     companion object {
-        const val ip: String = "192.168.88.10"
+        const val IP: String = "192.168.88.2"
     }
 }

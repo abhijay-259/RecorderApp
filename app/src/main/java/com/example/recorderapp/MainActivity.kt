@@ -1,6 +1,7 @@
 package com.example.recorderapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController() //nav object
                     val db = SubmissionDatabase.getDatabase(applicationContext)
                     val audioRepository = AudioRepository(applicationContext, db.dao)
-                    val authRepository = AuthRepository(applicationContext)
+                    val authRepository = AuthRepository()
                     navController.addOnDestinationChangedListener { _, destination, _ ->
                         // 1. Check if the screen the user is currently looking at matches your authentication gates
                         val currentScreenRoute = destination.route ?: ""
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
                         // 2. If they have backed up into the Sign In or Login routes, clear the memory tracker!
                         if (currentScreenRoute.contains("SignInRoute") || currentScreenRoute.contains("LoginRoute")) {
                             authRepository.clearSession()
-                            android.util.Log.d("SESSION_LOG", "User exited the app workspace. Repository session cleared successfully!")
+                            Log.e("SESSION_LOG", "User exited the app workspace. Repository session cleared successfully!")
                         }
                     }
                     // The Navigation traffic router graph
@@ -103,7 +104,7 @@ class MainActivity : ComponentActivity() {
                             SignInScreen(
                                 viewModel = signInViewModel,
                                 onRegistrationSuccess = {
-                                    navController.navigate(ConfirmAccount)
+                                    navController.navigate(RecordUpload)
                                 },
                                 onNavToLogInClicked = {
                                     navController.navigate(LogIn) {
