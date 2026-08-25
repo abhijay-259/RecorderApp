@@ -99,19 +99,7 @@ fun LogInScreen(
     }
 }
 @Composable
-fun LogInScreenUI(
-    emailState: TextFieldState,
-    passState: TextFieldState,
-    logInButton: () -> Unit,
-    signInButton: () -> Unit,
-    logInSuccess: () -> Unit,
-    errorMessage: String?,
-    isSuccess: Boolean
-) {
-
-    if (isSuccess) {
-        logInSuccess()
-    }
+fun LogInScreenUI() {
     Column(
         modifier = Modifier
             .padding(24.dp),
@@ -135,7 +123,7 @@ fun LogInScreenUI(
                 modifier = Modifier.weight(0.2f),
             )
             OutlinedTextField(
-                state = emailState,
+                state = TextFieldState(),
                 modifier = Modifier
                     .weight(0.8f)
             )
@@ -143,14 +131,13 @@ fun LogInScreenUI(
         Row() {
             Text(text = "Password:", modifier = Modifier.weight(0.2f))
             OutlinedTextField(
-                state = passState,
+                state = TextFieldState(),
                 modifier = Modifier
                     .weight(0.8f)
             )
         }
         Spacer(modifier = Modifier.padding(12.dp))
         Button(onClick = {
-            logInButton()
         }) {
             Text("Login")
         }
@@ -162,11 +149,8 @@ fun LogInScreenUI(
                     .clickable(onClick = {})
             )
             TextButton(
-                onClick = { signInButton}) {
+                onClick = {}) {
                 Text("Sign In")
-            }
-            if (errorMessage != null) {
-                Text(errorMessage)
             }
         }
 
@@ -177,12 +161,5 @@ fun LogInScreenUI(
 @Composable
 fun LogInScreenPreview() {
     LogInScreenUI(
-        TextFieldState(),
-        TextFieldState(),
-        {},
-        {},
-        {},
-        null,
-        false
     )
 }
