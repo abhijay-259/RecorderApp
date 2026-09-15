@@ -85,18 +85,18 @@ class AuthRepository() {
             "Network connection lost. Please verify your Wi-Fi link."
         }
     }
-    suspend fun accountLogin(payload: LogInPayload): String? {
+    suspend fun accountLogin(logInPayload: LogInPayload): String? {
         return try {
             val response = client.post("http://$IP:8000/login"){
                 contentType(ContentType.Application.Json)
-                setBody(payload)
+                setBody(logInPayload)
             }
             if (response.status.value == 200) {
                 val successData = response.body<LoginSuccessResponse>()
                 currentUserSession = UserSessionProfile(
                     successData.user.id,
                     successData.user.name,
-                    payload.email
+                    logInPayload.email
                     )
                 null
             }
@@ -112,6 +112,6 @@ class AuthRepository() {
         currentUserSession = null
     }
     companion object {
-        const val IP: String = "192.168.88.2"
+        const val IP: String = "192.168.1.37"
     }
 }

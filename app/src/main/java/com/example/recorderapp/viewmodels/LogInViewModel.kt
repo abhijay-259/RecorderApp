@@ -18,7 +18,6 @@ class LogInViewModel(
 
     val emailState = TextFieldState("")
     val passState = TextFieldState("")
-
     fun logInButton() {
         viewModelScope.launch {
             val payload = LogInPayload(emailState.text.toString(), passState.text.toString())

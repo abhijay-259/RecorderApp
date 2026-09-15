@@ -1,3 +1,8 @@
+from builtins import str
+import random
+import time
+import os
+
 from fastapi import FastAPI, UploadFile, Form, File, status, HTTPException
 from pydantic import BaseModel, EmailStr # ADDED: Required for data validation
 import psycopg2
@@ -5,6 +10,8 @@ from psycopg2.extras import RealDictCursor
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Global temporary dictionary to track OTPs in laptop memory without Redis
 # Shape will be: {"user_email@gmail.com": {"code": "123456", "expires_at": 1718293849}}
@@ -22,6 +29,7 @@ class UserLogin(BaseModel):
 #_______________________________________________________________________________________________________________________
 
 app = FastAPI()
+db_password = os.environ.get("DB_PASSWORD")
 #_______________________________________________________________________________________________________________________
 
 def send_otp_email(receiver_email: str, otp_code: str):
@@ -57,7 +65,7 @@ def get_db_connection(): # Single source of truth for connecting python to local
         host="localhost",
         database="postgres",
         user="postgres",
-        password="jay2592003"
+        password=db_password
     )
     return conn
 #_______________________________________________________________________________________________________________________
@@ -105,16 +113,15 @@ def login_user(login_data: UserLogin):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Your account has not been verified, redirecting you to OTP screen to verify your email"
             )
-        if login_data.password == looked_up_password:
-            return {"status": "success", "user": {
-                "id" : id,
-                "name" : name,
-            } }
-        else:
+        if not pwd_context.verify(login_data.password, looked_up_password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="The password is incorrect"
             )
+        return {"status": "success", "user": {
+            "id" : id,
+            "name" : name,
+        } }
     except HTTPException:
         raise
     except Exception as e:
@@ -148,14 +155,15 @@ def register_user(user_data: UserRegisterRequest):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail= "This email is already in use. Please log in instead."
                 )
+        is_verified = "true"
         # Secure parameterized query prevents SQL injection attacks
-        query = "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s);"
-        cursor.execute(query, (user_data.name, user_data.email, user_data.password))
+        hashed_pwd = pwd_context.hash(user_data.password)
+        query = "INSERT INTO users (name, email, password_hash, is_verified) VALUES (%s, %s, %s, %s);"
+        cursor.execute(query, (user_data.name, user_data.email, hashed_pwd, is_verified))
         
-        # FIXED: Lock the new user row permanently into your storage files
         connection.commit()
          # 2. Generate a random 6-digit verification code string
-        generated_otp = str(random.randint(100000, 999999))
+        """generated_otp = str(random.randint(100000, 999999))
         
         # 3. Calculate expiration timestamp (Current epoch time + 300 seconds)
         five_minutes_in_seconds = 300
@@ -171,7 +179,7 @@ def register_user(user_data: UserRegisterRequest):
         print(f"--- SECURITY LOG: Sent OTP {generated_otp} to {user_data.email}. Expiring in 5 mins. ---")
         # send_otp_email(user_data.email, generated_otp)
         # 3. Fire and forget the automation script!
-        send_otp_email(receiver_email=user_data.email, otp_code=generated_otp)
+        send_otp_email(receiver_email=user_data.email, otp_code=generated_otp)"""
     
         return {"status": "success", "message": "User registered. Verification OTP sent!"}
         

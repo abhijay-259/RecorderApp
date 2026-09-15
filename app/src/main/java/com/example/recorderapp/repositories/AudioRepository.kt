@@ -110,6 +110,12 @@ class AudioRepository(
         }
     }
 
+    fun cancelRecording() {
+        val file = File(context.filesDir, currentFileName!!)
+        file.delete()
+        currentFileName = null
+    }
+
     fun startPlayback(file: File) {
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
@@ -167,7 +173,11 @@ class AudioRepository(
                     currentFileName = null
                 }
                 return response.status.value == 200
-            } catch (e: Exception) {
+            }
+            catch (e: CancellationException) {
+                throw e
+            }
+            catch (e: Exception) {
                 println("Failed response")
                 Log.e("NETWORK_ERROR", "Upload failed: ${e.localizedMessage}", e)
                 return false
@@ -184,6 +194,9 @@ class AudioRepository(
                 triggerAutomatedUpload()
                 currentFileName = null
                 return true
+            }
+            catch (e: CancellationException) {
+                throw e
             }
             catch (e: Exception) {
                 Log.e("LOCAL STORAGE ERROR", "Save Failed: ${e.localizedMessage}", e)
@@ -261,7 +274,11 @@ class AudioRepository(
                 }
             }
             true
-        } catch (e: Exception) {
+        }
+        catch (e: CancellationException) {
+            throw e
+        }
+        catch (e: Exception) {
             Log.println(Log.ASSERT, "SyncError", "Exception in loop: ${e.message}")
             e.printStackTrace()
             false
@@ -287,6 +304,6 @@ class AudioRepository(
         Log.println(Log.ASSERT, "WorkManager", "Unique sync task registered with OS.")
     }
     companion object {
-        const val IP: String = "192.168.88.2"
+        const val IP: String = "192.168.1.37"
     }
 }

@@ -57,6 +57,7 @@ class RUViewModel(
         if (status.value == UploadState.IDLE) {
             if (hasMicPermission) {
                 _status.value = UploadState.RECORDING
+                audioRepository.startRecording()
             }
         }
         else if (status.value == UploadState.RECORDING) {
@@ -65,6 +66,9 @@ class RUViewModel(
         }
     }
 
+    fun saveOrCancelButton() {
+        if (status.value==UploadState.UPLOADING) cancelUploadButton() else startUploadButton()
+    }
     fun startUploadButton() {
         uploadJob = viewModelScope.launch {
             _status.value = UploadState.UPLOADING
@@ -95,6 +99,14 @@ class RUViewModel(
                     _status.value = UploadState.IDLE
                 }
 
+        }
+    }
+
+    fun cancelRecordingButton() {
+        if (status.value != UploadState.RECORDING) {
+            viewModelScope.launch {
+                audioRepository.cancelRecording()
+            }
         }
     }
 }
