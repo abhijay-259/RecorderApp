@@ -43,15 +43,12 @@ import com.example.recorderapp.viewmodels.PendingSubmissionsViewModel
 import com.example.recorderapp.viewmodels.RUViewModel
 import com.example.recorderapp.viewmodels.SignInViewModel
 import com.example.recorderapp.workers.AutoSubmissionsWorker
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import kotlinx.serialization.Serializable
-
-// KOTLIN TYPE SAFE ROUTES
-@Serializable object SignIn
-@Serializable object LogIn
-@Serializable object ConfirmAccount
-@Serializable object RecordUpload
-@Serializable object PendingSubmissions
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val constraints = Constraints.Builder()
@@ -81,111 +78,12 @@ class MainActivity : ComponentActivity() {
                         val currentScreenRoute = destination.route ?: ""
 
                         // 2. If they have backed up into the Sign In or Login routes, clear the memory tracker!
-                        if (currentScreenRoute.contains("SignInRoute") || currentScreenRoute.contains("LoginRoute")) {
+                        if (currentScreenRoute.contains("com.example.recorderapp.SignIn") || currentScreenRoute.contains("com.example.recorderapp.LogIn")) {
                             authRepository.clearSession()
                             Log.e("SESSION_LOG", "User exited the app workspace. Repository session cleared successfully!")
                         }
                     }
-                    // The Navigation traffic router graph
-                    NavHost(
-                        navController = navController,
-                        startDestination = SignIn
-                    ) {
-                        composable<SignIn> {
-                            val signInViewModel = viewModel<SignInViewModel>(
-                                factory = object: ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return SignInViewModel(
-                                            authRepository
-                                        ) as T
-                                    }
-                                }
-                            )
-                            SignInScreen(
-                                viewModel = signInViewModel,
-                                onRegistrationSuccess = {
-                                    navController.navigate(RecordUpload)
-                                },
-                                onNavToLogInClicked = {
-                                    navController.navigate(LogIn) {
-                                        popUpTo(SignIn) {inclusive = true}
-                                    }
-                                }
-                            )
-                        }
-                        composable<LogIn> {
-                            val logInViewModel = viewModel<LogInViewModel>(
-                                factory = object: ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return LogInViewModel(
-                                            authRepository
-                                        ) as T
-                                    }
-                                }
-                            )
-                            LogInScreen(
-                                viewModel = logInViewModel,
-                                onAuthSuccess = {navController.navigate(RecordUpload)},
-                                onNavToSignInClicked = {navController.navigate(SignIn) {
-                                    popUpTo(LogIn) {inclusive = true}
-                                } }
-                            )
-                        }
-                        composable<ConfirmAccount> {
-                            val confirmAccountViewModel = viewModel<ConfirmAccountViewModel>(
-                                factory = object: ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return ConfirmAccountViewModel(
-                                            authRepository
-                                        ) as T
-                                    }
-                                }
-                            )
-                            ConfirmAccountScreen(
-                                onConfirmButtonClicked = {navController.navigate(RecordUpload){
-                                    popUpTo(ConfirmAccount) {inclusive = true}
-                                } }
-                            )
-                        }
-                        composable<RecordUpload> {
-                            val ruViewModel = viewModel<RUViewModel>(
-                                factory = object: ViewModelProvider.Factory {
-                                    override fun <T: ViewModel> create(modelClass: Class<T>): T {
-                                        return RUViewModel(
-                                            db.dao,
-                                            AndroidConnectivityObserver(
-                                                context = applicationContext
-                                            ),
-                                            audioRepository,
-                                            authRepository
-                                        ) as T
-                                    }
-                                }
-                            )
-                            RecordingAndUploadingScreen(
-                                viewModel = ruViewModel,
-                                onNavToSubmissionsClicked = {navController.navigate(
-                                    PendingSubmissions)}
-                                )
-                        }
-                        composable<PendingSubmissions> {
-                            val pendingSubmissionsViewModel = viewModel<PendingSubmissionsViewModel>(
-                                factory = object: ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return PendingSubmissionsViewModel(
-                                            db.dao,
-                                            AndroidConnectivityObserver(applicationContext),
-                                            audioRepository,
-                                            authRepository
-                                        ) as T
-                                    }
-                                }
-                            )
-                            PendingSubmissionsScreen(
-                                pendingSubmissionsViewModel
-                            )
-                        }
-                    }
+                    AppNav(navController,authRepository, audioRepository, db, applicationContext)
                 }
             }
         }

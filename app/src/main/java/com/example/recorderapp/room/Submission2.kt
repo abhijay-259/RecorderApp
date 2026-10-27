@@ -8,7 +8,7 @@ data class Submission2(
     val worker_name: String,
     val task_id: Int,
     val filePath: String,
-    val worker_id: Int?,
+    val worker_id: String?,
     @PrimaryKey(autoGenerate = true)
     val submission_id: Int = 0
 )

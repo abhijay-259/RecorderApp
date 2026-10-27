@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Submission2:: class],
-    version = 4,
+    version = 5,
     autoMigrations = []
 )
 abstract class SubmissionDatabase(): RoomDatabase() {
@@ -32,7 +32,7 @@ abstract class SubmissionDatabase(): RoomDatabase() {
                     SubmissionDatabase::class.java,
                     "submissions.db"
                 )
-                    .addMigrations(migration1To2, migration2To3)
+                    .addMigrations(migration1To2, migration2To3, MIGRATION_4_5)
                     .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance
@@ -52,6 +52,28 @@ abstract class SubmissionDatabase(): RoomDatabase() {
                         "file_path TEXT NOT NULL, " +
                         "worker_id INTEGER NOT NULL, " +
                         "submission_id INTEGER PRIMARY KEY AUTOINCREMENT);")
+            }
+        }
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                CREATE TABLE Submission2_new (
+                submission_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                worker_name TEXT NOT NULL,
+                task_id INTEGER NOT NULL,
+                filePath TEXT NOT NULL,
+                worker_id TEXT
+                )
+                """.trimIndent())
+
+                db.execSQL("""
+                INSERT INTO Submission2_new (submission_id, worker_name, task_id, filePath, worker_id)
+                SELECT submission_id, worker_name, task_id, filePath, CAST(worker_id AS TEXT)
+                FROM Submission2
+                """.trimIndent())
+
+                db.execSQL("DROP TABLE Submission2")
+                db.execSQL("ALTER TABLE Submission2_new RENAME TO Submission2")
             }
         }
     }

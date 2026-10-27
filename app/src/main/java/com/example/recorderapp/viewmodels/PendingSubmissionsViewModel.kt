@@ -54,7 +54,7 @@ class PendingSubmissionsViewModel(
                 audioRepository.startPlayback(voiceFile)
             }
         } else {
-            android.util.Log.e("PLAYBACK ERROR", "The file at $filePath has been deleted or cannot be found on disk!")
+            Log.e("PLAYBACK ERROR", "The file at $filePath has been deleted or cannot be found on disk!")
         }
     }
 }

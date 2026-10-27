@@ -7,6 +7,9 @@ import com.example.recorderapp.models.LoginSuccessResponse
 import com.example.recorderapp.models.OtpVerificationPayload
 import com.example.recorderapp.models.UserRegistration
 import com.example.recorderapp.models.UserSessionProfile
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
@@ -21,14 +24,17 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.math.log
 
 class AuthRepository() {
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    val currentUserSession: UserSessionProfile?
+        get() = auth.currentUser?.let { toSessionProfile(it, it.displayName ?: "")}
 
-    var currentUserSession: UserSessionProfile? = null
-        private set
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
             json(Json {
@@ -37,7 +43,7 @@ class AuthRepository() {
         }
     }
     suspend fun createAccount(registrationData: UserRegistration): String? {
-        return try {
+        /*return try
             // 1. Send a standard HTTP POST request to the exact server path
             val response: HttpResponse = client.post("http://$IP:8000/register") {
                 // 2. Instruct Ktor to format the request body as a standard JSON string payload
@@ -53,10 +59,21 @@ class AuthRepository() {
                 val rawErrorJsonText =response.bodyAsText()
                 val parsedError = Json.decodeFromString<FastApiErrorResponse>(rawErrorJsonText)
                 parsedError.detail
-            }
+            }*/
+        return try {
+            val result = auth.createUserWithEmailAndPassword(
+                registrationData.email,
+                registrationData.password
+            ).await()
+
+            val profileUpdate = UserProfileChangeRequest.Builder()
+                .setDisplayName(registrationData.name)
+                .build()
+            result.user?.updateProfile(profileUpdate)?.await()
+            null
         } catch (e: Exception) {
             e.printStackTrace()
-            "Network Connection Lost"
+            e.message ?: "Registration Failed"
         }
     }
     suspend fun verifyAccountOtp(email: String, otpCode: String): String? {
@@ -85,33 +102,39 @@ class AuthRepository() {
             "Network connection lost. Please verify your Wi-Fi link."
         }
     }
-    suspend fun accountLogin(logInPayload: LogInPayload): String? {
+    suspend fun accountLogin(loginPayload: LogInPayload): String? {
         return try {
-            val response = client.post("http://$IP:8000/login"){
-                contentType(ContentType.Application.Json)
-                setBody(logInPayload)
-            }
-            if (response.status.value == 200) {
-                val successData = response.body<LoginSuccessResponse>()
-                currentUserSession = UserSessionProfile(
-                    successData.user.id,
-                    successData.user.name,
-                    logInPayload.email
-                    )
-                null
-            }
-            else {
-                "Invalid Credentials or Unverified Account"
-            }
+            val result = auth.signInWithEmailAndPassword(
+                loginPayload.email,
+                loginPayload.password
+            ).await()
+
+            null
         } catch (e: Exception) {
             e.printStackTrace()
-            "Network Error"
+            "Invalid Credentials or Unverified Account"
+        }
+    }
+    suspend fun getIdToken(): String? {
+        return try {
+            auth.currentUser?.getIdToken(false)?.await()?.token
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
     fun clearSession() {
-        currentUserSession = null
+        auth.signOut()
+    }
+
+    private fun toSessionProfile(user: FirebaseUser, name: String): UserSessionProfile {
+        return UserSessionProfile(
+            id = user.uid,
+            name = name,
+            email = user.email ?: ""
+        )
     }
     companion object {
-        const val IP: String = "192.168.1.37"
+        const val IP: String = "192.168.1.10"
     }
 }

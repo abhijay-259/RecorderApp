@@ -162,8 +162,12 @@ fun RecordingAndUploadingScreen(
                 text = { Text("Are you sure you want to cancel this recording?")},
                 onDismissRequest = { showCancelDialog = false },
                 confirmButton = {
-                    viewModel.cancelRecordingButton()
-                    showCancelDialog = false
+                    TextButton(onClick = {
+                        viewModel.cancelRecordingButton()
+                        showCancelDialog = false
+                    }) {
+                        Text("Confirm")
+                    }
                 }
             )
         }

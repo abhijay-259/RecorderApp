@@ -21,14 +21,17 @@ import com.example.recorderapp.room.Submission2
 import com.example.recorderapp.room.SubmissionDao
 import com.example.recorderapp.room.SubmissionDatabase
 import com.example.recorderapp.workers.AutoSubmissionsWorker
+import com.google.firebase.auth.FirebaseAuth
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -38,6 +41,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -63,7 +67,7 @@ class AudioRepository(
     fun startRecording() {
         try {
             currentFileName = "${System.currentTimeMillis()}_${UUID.randomUUID()}.mp4"
-            val file = File(context.filesDir, currentFileName!!)
+            val file = File(context.filesDir, currentFileName)
             /*
             Uses native built in library called android.os.Build
             Build.VERSION.SDK_INT reads numerical android version on phone
@@ -111,8 +115,10 @@ class AudioRepository(
     }
 
     fun cancelRecording() {
-        val file = File(context.filesDir, currentFileName!!)
-        file.delete()
+        currentFileName?.let {
+            val deleted = File(context.filesDir, it).delete()
+            Log.d("CANCEL_RECORDING", "Deleted $it: $deleted")
+        }
         currentFileName = null
     }
 
@@ -145,6 +151,11 @@ class AudioRepository(
     }
 
     suspend fun startUploading(currentUser: UserSessionProfile?, isConnected: Boolean, submissionDao: SubmissionDao): Boolean {
+        val fileName = currentFileName
+        if (fileName == null) {
+            Log.e("UPLOAD_ERROR", "No recording to upload")
+            return false
+        }
         // 1. Locate the physical file and read its bytes
         val voiceFile = File(context.filesDir, currentFileName.toString())
         if (!voiceFile.exists()) {
@@ -153,6 +164,11 @@ class AudioRepository(
         }
         val fileBytes = voiceFile.readBytes()
         if (isConnected) {
+            val token = getIdToken()
+            if (token ==null) {
+                Log.e("UPLOAD_ERROR", "No ID token available, user may be signed out")
+                return false
+            }
             try {
                 println("reached try isConnected = $isConnected")
                 // 2. Stream the binary file to your laptop over Wi-Fi
@@ -162,14 +178,20 @@ class AudioRepository(
                         append("worker_name", currentUser!!.name)
                         append("email",currentUser.email)
                         append("user_id", currentUser.id)
-                        append("recorded_text", currentFileName!!)
+                        append("recorded_text", fileName)
                         append("audio_file", fileBytes, Headers.build {
-                            append(HttpHeaders.ContentDisposition, "filename=\"$currentFileName\"")
+                            append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
                         })
+
                     }
-                )
+                ) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                }
+                if (response.status.value != 200) {
+                    Log.e("UPLOAD_ERROR", "Status ${response.status.value}: ${response.bodyAsText()}")
+                }
                 if (response.status.value == 200) {
-                    File(context.filesDir, currentFileName.toString()).delete()
+                    File(context.filesDir, fileName.toString()).delete()
                     currentFileName = null
                 }
                 return response.status.value == 200
@@ -204,8 +226,9 @@ class AudioRepository(
             }
         }
     }
-    suspend fun uploadSubmission(name: String, email: String, id: Int, fileName: String, fileBytes: ByteArray): Boolean {
+    suspend fun uploadSubmission(name: String, email: String, id: String, fileName: String, fileBytes: ByteArray): Boolean {
         return try {
+            val token = getIdToken() ?: return false
             val response: HttpResponse = client.submitFormWithBinaryData(
                 url = "http://$IP:8000/upload-audio",
                 formData = formData {
@@ -218,6 +241,7 @@ class AudioRepository(
                     })
                 }
             ) {
+                header(HttpHeaders.Authorization, "Bearer $token")
                 timeout {
                     requestTimeoutMillis = 15000
                     connectTimeoutMillis = 5000
@@ -253,7 +277,7 @@ class AudioRepository(
                 val success = uploadSubmission(
                     submission.worker_name,
                     "example@email.com",
-                    submission.worker_id ?: 0,
+                    submission.worker_id ?: "",
                     file.name,
                     fileBytes
                 )
@@ -301,9 +325,19 @@ class AudioRepository(
             ExistingWorkPolicy.KEEP,
             workRequest
         )
-        Log.println(Log.ASSERT, "WorkManager", "Unique sync task registered with OS.")
+        Log.println(        Log.ASSERT, "WorkManager", "Unique sync task registered with OS.")
+    }
+    private suspend fun getIdToken(): String? {
+        return try {
+            FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()?.token
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e("AUTH", "Could not get ID token: ${e.localizedMessage}")
+            null
+        }
     }
     companion object {
-        const val IP: String = "192.168.1.37"
+        const val IP: String = "192.168.1.10"
     }
 }

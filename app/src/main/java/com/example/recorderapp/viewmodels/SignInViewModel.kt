@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.recorderapp.models.LogInPayload
 import com.example.recorderapp.models.UserRegistration
-import com.example.recorderapp.repositories.AudioRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -49,10 +48,8 @@ class SignInViewModel(
         if (isPasswordMatching(currentPassword, currentConfirmPassword)) {
 
             viewModelScope.launch {
-                val payload = LogInPayload(userData.email, userData.password)
                 val error = authRepository.createAccount(userData)
-                val result = authRepository.accountLogin(payload)
-                if (error == null && result == null) {
+                if (error == null) {
                     _uiState.update { it.copy(signInError = false, isSuccess = true, errorMessage = null) }
                 } else {
                     _uiState.update { it.copy(signInError = true, errorMessage = error) }

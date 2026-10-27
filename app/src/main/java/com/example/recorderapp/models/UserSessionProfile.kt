@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserSessionProfile(
-    val id: Int,
+    val id: String,
     val name: String,
     val email: String = ""
 )

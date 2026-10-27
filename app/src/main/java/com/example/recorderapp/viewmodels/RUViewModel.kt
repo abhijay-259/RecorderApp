@@ -40,7 +40,7 @@ class RUViewModel(
             false
             )
     var uploadJob: Job? = null
-    val currentUser = authRepository.currentUserSession
+    val currentUser get() = authRepository.currentUserSession
     private val _status = MutableStateFlow(UploadState.IDLE)
     val status = _status.asStateFlow()
     fun onPermissionGranted(isGranted: Boolean) {
@@ -67,7 +67,11 @@ class RUViewModel(
     }
 
     fun saveOrCancelButton() {
-        if (status.value==UploadState.UPLOADING) cancelUploadButton() else startUploadButton()
+        when (status.value) {
+            UploadState.UPLOADING -> cancelUploadButton()
+            UploadState.IDLE -> startUploadButton()
+            else -> Unit
+        }
     }
     fun startUploadButton() {
         uploadJob = viewModelScope.launch {
@@ -103,7 +107,7 @@ class RUViewModel(
     }
 
     fun cancelRecordingButton() {
-        if (status.value != UploadState.RECORDING) {
+        if (status.value == UploadState.IDLE) {
             viewModelScope.launch {
                 audioRepository.cancelRecording()
             }
