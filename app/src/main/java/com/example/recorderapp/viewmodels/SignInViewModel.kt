@@ -3,17 +3,13 @@ package com.example.recorderapp.viewmodels
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.recorderapp.models.LogInPayload
 import com.example.recorderapp.models.UserRegistration
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 import com.example.recorderapp.repositories.AuthRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.time.Duration.Companion.milliseconds
 
 data class SignInUIState(
     val signInError: Boolean = false,

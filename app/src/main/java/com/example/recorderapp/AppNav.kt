@@ -13,12 +13,10 @@ import com.example.recorderapp.connectivity.AndroidConnectivityObserver
 import com.example.recorderapp.repositories.AudioRepository
 import com.example.recorderapp.repositories.AuthRepository
 import com.example.recorderapp.room.SubmissionDatabase
-import com.example.recorderapp.screens.ConfirmAccountScreen
 import com.example.recorderapp.screens.LogInScreen
 import com.example.recorderapp.screens.PendingSubmissionsScreen
 import com.example.recorderapp.screens.RecordingAndUploadingScreen
 import com.example.recorderapp.screens.SignInScreen
-import com.example.recorderapp.viewmodels.ConfirmAccountViewModel
 import com.example.recorderapp.viewmodels.LogInViewModel
 import com.example.recorderapp.viewmodels.PendingSubmissionsViewModel
 import com.example.recorderapp.viewmodels.RUViewModel
@@ -83,22 +81,6 @@ fun AppNav(
                 onAuthSuccess = {navController.navigate(RecordUpload)},
                 onNavToSignInClicked = {navController.navigate(SignIn) {
                     popUpTo(LogIn) {inclusive = true}
-                } }
-            )
-        }
-        composable<ConfirmAccount> {
-            val confirmAccountViewModel = viewModel<ConfirmAccountViewModel>(
-                factory = object: ViewModelProvider.Factory {
-                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        return ConfirmAccountViewModel(
-                            authRepository
-                        ) as T
-                    }
-                }
-            )
-            ConfirmAccountScreen(
-                onConfirmButtonClicked = {navController.navigate(RecordUpload){
-                    popUpTo(ConfirmAccount) {inclusive = true}
                 } }
             )
         }

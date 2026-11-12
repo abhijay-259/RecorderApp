@@ -1,10 +1,10 @@
 package com.example.recorderapp.viewmodels
 
 import android.util.Log
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recorderapp.connectivity.ConnectivityObserver
 import com.example.recorderapp.repositories.AudioRepository
 import com.example.recorderapp.repositories.AuthRepository
@@ -27,6 +27,10 @@ class PendingSubmissionsViewModel(
         SharingStarted.WhileSubscribed(),
         emptyList()
     )
+    private val _isPlaying = mutableStateOf(false)
+    val isPlaying = _isPlaying
+    private val _index = mutableIntStateOf(0)
+    val index = _index
     val submissions = dao.getSubmissions().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
@@ -47,14 +51,24 @@ class PendingSubmissionsViewModel(
         }
     }
 
-    fun playButton(filePath: String) {
+    fun playButton(filePath: String, index: Int) {
         val voiceFile = File(filePath)
-        if (voiceFile.exists()) {
-            viewModelScope.launch {
-                audioRepository.startPlayback(voiceFile)
-            }
-        } else {
-            Log.e("PLAYBACK ERROR", "The file at $filePath has been deleted or cannot be found on disk!")
+        if (!voiceFile.exists()) {
+            Log.e("PLAYBACK ERROR", "The file at $filePath cannot be found on disk!")
+            return
+        }
+        if (_isPlaying.value && _index.intValue == index) {
+            audioRepository.stopPlayback()
+            _isPlaying.value = false
+            _index.intValue = 0
+        }
+        else if (!_isPlaying.value) {
+
+        }
+    }
+    fun deleteButton(id: Int) {
+        viewModelScope.launch {
+            dao.deleteSubmission(id)
         }
     }
 }

@@ -120,7 +120,7 @@ def receive_audio(
         INSERT INTO submissions (task_id, worker_name, recorded_text, firebase_uid)
         VALUES (%s, %s, %s, %s);
         """
-        cursor.execute(insert_query, (102, worker_name, f"Audio File Saved As: {recorded_text}", uid))
+        cursor.execute(insert_query, (100, worker_name, f"Audio File Saved As: {recorded_text}", uid))
 
         conn.commit()
         print(f"Audio received from {worker_name}!")

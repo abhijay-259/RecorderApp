@@ -1,8 +1,6 @@
 package com.example.recorderapp.screens
 
 import android.util.Log
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,29 +10,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.room.util.TableInfo
 import com.example.recorderapp.viewmodels.PendingSubmissionsViewModel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.forEach
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.recorderapp.R
-import com.example.recorderapp.repositories.AuthRepository
-import com.example.recorderapp.room.SubmissionDao
+import com.example.recorderapp.customfunctions.timeFromPath
 
 @Composable
 fun PendingSubmissionsScreen(
@@ -63,9 +52,11 @@ fun PendingSubmissionsScreen(
             items(submissionList.size) { index ->
                 val currentSubmission = submissionList[index]
                 PendingSubmission(
+                    slno = index,
                     taskID = currentSubmission.task_id.toString(),
-                    date = "Sample date",
-                    function = {viewModel.playButton(currentSubmission.filePath)}
+                    date = timeFromPath(currentSubmission.filePath)!!,
+                    functionPlay = {viewModel.playButton(currentSubmission.filePath, index+1)},
+                    functionDelete = {viewModel.deleteButton(currentSubmission.submission_id)}
                 )
             }
         }
@@ -94,9 +85,9 @@ fun PendingSubmissionsScreenPreview() {
 }
 
 @Composable
-fun PendingSubmission(taskID: String, date: String, function: () -> Unit) {
+fun PendingSubmission(slno: Int, taskID: String, date: String, functionPlay: () -> Unit, functionDelete: () -> Unit) {
     Row() {
-        Text("1")
+        Text((slno+1).toString() + ". ")
         Column(
             modifier = Modifier
                 .weight(0.8f)
@@ -105,10 +96,17 @@ fun PendingSubmission(taskID: String, date: String, function: () -> Unit) {
             Text(date)
         }
         Icon(
+            painter = painterResource(id = R.drawable.ic_delete),
+            contentDescription = "Delete",
+            modifier = Modifier
+                .clickable(onClick = functionDelete)
+                .weight(0.2f)
+        )
+        Icon(
             painter = painterResource(id = R.drawable.ic_play),
             contentDescription = "Play",
             modifier = Modifier
-                .clickable(onClick = function)
+                .clickable(onClick = functionPlay)
                 .weight(0.2f)
         )
     }
@@ -137,9 +135,11 @@ fun PendingSubmissionsScreendc() {
         ) {
             items(20) { index ->
                 PendingSubmission(
+                    slno = index,
                     taskID = "103",
                     date = "Sample date",
-                    function = {}
+                    functionPlay = {},
+                    functionDelete = {}
                 )
             }
         }

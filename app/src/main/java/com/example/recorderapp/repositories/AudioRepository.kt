@@ -5,21 +5,15 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.room.Dao
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.recorderapp.models.SubmissionPayload
 import com.example.recorderapp.models.UserSessionProfile
-import com.example.recorderapp.room.Submission
 import com.example.recorderapp.room.Submission2
 import com.example.recorderapp.room.SubmissionDao
-import com.example.recorderapp.room.SubmissionDatabase
 import com.example.recorderapp.workers.AutoSubmissionsWorker
 import com.google.firebase.auth.FirebaseAuth
 import io.ktor.client.HttpClient
@@ -29,23 +23,16 @@ import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.header
-import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.IOException
 import java.util.UUID
-import kotlin.coroutines.coroutineContext
 
 class AudioRepository(
     private val context: Context,
@@ -66,8 +53,12 @@ class AudioRepository(
 
     fun startRecording() {
         try {
-            currentFileName = "${System.currentTimeMillis()}_${UUID.randomUUID()}.mp4"
-            val file = File(context.filesDir, currentFileName)
+            currentFileName?.let { File(context.filesDir, it).delete() }   // clean up the previous unsaved recording
+            currentFileName = null
+
+            val name = "${System.currentTimeMillis()}_${UUID.randomUUID()}.mp4"
+            currentFileName = name
+            val file = File(context.filesDir, name)
             /*
             Uses native built in library called android.os.Build
             Build.VERSION.SDK_INT reads numerical android version on phone
@@ -122,7 +113,9 @@ class AudioRepository(
         currentFileName = null
     }
 
-    fun startPlayback(file: File) {
+    fun startPlayback(file: File, onComplete: () -> Unit): Boolean {
+        stopPlayback()
+        var started = false
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -132,12 +125,16 @@ class AudioRepository(
             )
             try {
                 setDataSource(context, Uri.fromFile(file))
+                setOnCompletionListener { stopPlayback(); onComplete() }
                 prepare()
                 start()
+                started = true
             } catch (e: IOException) {
                 e.printStackTrace()
             }
         }
+        if (!started) stopPlayback()
+        return started
     }
 
     fun stopPlayback() {
@@ -208,7 +205,7 @@ class AudioRepository(
             try {
                 val userSubmission = Submission2(
                     currentUser!!.name,
-                    102,
+                    DEFAULT_TASK_ID,
                     voiceFile.absolutePath,
                     currentUser.id,
                 )
@@ -339,5 +336,6 @@ class AudioRepository(
     }
     companion object {
         const val IP: String = "192.168.1.10"
+        const val DEFAULT_TASK_ID = 102
     }
 }

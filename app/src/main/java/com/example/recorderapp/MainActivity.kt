@@ -1,5 +1,4 @@
 package com.example.recorderapp
-
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -11,42 +10,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.RoomDatabaseConstructor
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.recorderapp.connectivity.AndroidConnectivityObserver
 import com.example.recorderapp.repositories.AudioRepository
 import com.example.recorderapp.repositories.AuthRepository
-import com.example.recorderapp.room.SubmissionDao
 import com.example.recorderapp.room.SubmissionDatabase
-import com.example.recorderapp.screens.ConfirmAccountScreen
-import com.example.recorderapp.screens.LogInScreen
-import com.example.recorderapp.screens.PendingSubmissionsScreen
-import com.example.recorderapp.screens.RecordingAndUploadingScreen
 import com.example.recorderapp.screens.SignInScreen
 import com.example.recorderapp.ui.theme.RecorderAppTheme
-import com.example.recorderapp.viewmodels.ConfirmAccountViewModel
-import com.example.recorderapp.viewmodels.LogInViewModel
-import com.example.recorderapp.viewmodels.PendingSubmissionsViewModel
-import com.example.recorderapp.viewmodels.RUViewModel
-import com.example.recorderapp.viewmodels.SignInViewModel
 import com.example.recorderapp.workers.AutoSubmissionsWorker
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
-import kotlinx.serialization.Serializable
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

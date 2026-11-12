@@ -10,10 +10,8 @@ import kotlinx.coroutines.launch
 import com.example.recorderapp.repositories.AudioRepository
 import com.example.recorderapp.repositories.AuthRepository
 import com.example.recorderapp.room.SubmissionDao
-import com.example.recorderapp.room.SubmissionDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.seconds
